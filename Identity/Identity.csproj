@@ -122,15 +122,13 @@
     <Compile Include="Contexts\IdentityAppContext.cs" />
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\ManageController.cs" />
-    <Compile Include="Factories\AuthenticationManageFactory.cs" />
-    <Compile Include="Factories\IAuthenticationManageFactory.cs" />
     <Compile Include="Managers\ApplicationRoleManager.cs" />
     <Compile Include="Managers\ApplicationSignInManager.cs" />
     <Compile Include="Managers\ApplicationUserManager.cs" />
     <Compile Include="Models\AppUser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Services\EmailService.cs" />
-    <Compile Include="Services\SmsService.cs" />
+    <Compile Include="Managers\Services\EmailService.cs" />
+    <Compile Include="Managers\Services\SmsService.cs" />
     <Compile Include="StartupIdentity.cs" />
     <Compile Include="ViewModels\AddPhoneNumberViewModel.cs" />
     <Compile Include="ViewModels\ChangePasswordViewModel.cs" />

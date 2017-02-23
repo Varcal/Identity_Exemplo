@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
+using System.Web;
 using System.Web.Mvc;
 using Identity.Contexts;
 using Identity.Managers;
@@ -8,11 +9,9 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.Owin;
 using SimpleInjector;
+using SimpleInjector.Advanced;
 using SimpleInjector.Integration.Web;
 using SimpleInjector.Integration.Web.Mvc;
-using Microsoft.Owin.Security;
-using SimpleInjector.Advanced;
-using System.Web;
 
 namespace IoC
 {
@@ -40,7 +39,7 @@ namespace IoC
             container.Register<IRoleStore<IdentityRole, string>>(() => new RoleStore<IdentityRole>(new IdentityAppContext()), Lifestyle.Scoped);
             container.Register<ApplicationUserManager>(Lifestyle.Scoped);
             container.Register<ApplicationSignInManager>(Lifestyle.Scoped);
-            container.Register<IAuthenticationManager>(() => AdvancedExtensions.IsVerifying(container) ? new OwinContext(new Dictionary<string, object>()).Authentication
+            container.Register(() => container.IsVerifying() ? new OwinContext(new Dictionary<string, object>()).Authentication
                 : HttpContext.Current.GetOwinContext().Authentication, Lifestyle.Scoped);
             container.Register<ApplicationRoleManager>(Lifestyle.Scoped);
             #endregion

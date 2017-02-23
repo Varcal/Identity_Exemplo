@@ -1,18 +1,23 @@
 ﻿using System;
+using Identity.Contexts;
 using Identity.Managers;
 using Identity.Models;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin;
 using Microsoft.Owin.Security.Cookies;
+using Microsoft.Owin.Security.DataProtection;
 using Owin;
 
 namespace Identity
 {
     public class StartupIdentity
     {
+        public static IDataProtectionProvider DataProtectionProvider { get; private set; }
+
         public static void Configuration(IAppBuilder app)
         {
+            DataProtectionProvider = app.GetDataProtectionProvider();
             ConfigureAuth(app);
         }
 
