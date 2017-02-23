@@ -1,4 +1,4 @@
 $ cat .gitattributes
-/Scripts/* linguist-vendored
-/Content/* linguist-vendored
+MVC5/Scripts/* linguist-vendored
+MVC%/Content/* linguist-vendored
 *.rb linguist-language=C#
