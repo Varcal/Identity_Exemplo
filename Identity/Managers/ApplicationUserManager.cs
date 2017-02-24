@@ -1,7 +1,8 @@
 ﻿using System;
 using Identity.Contexts;
+using Identity.Managers.Services;
 using Identity.Models;
-using Identity.Services;
+using Identity.ViewModels;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.Owin;
@@ -13,6 +14,11 @@ namespace Identity.Managers
     public sealed class ApplicationUserManager : UserManager<AppUser>
     {
         public ApplicationUserManager(IUserStore<AppUser> store) : base(store)
+        {
+            ConfigureUserManager();
+        }
+
+        private void ConfigureUserManager()
         {
             UserValidator = new UserValidator<AppUser>(this)
             {
@@ -50,6 +56,6 @@ namespace Identity.Managers
             var provider = new DpapiDataProtectionProvider("Identity_Exemplo");
             var dataProtector = provider.Create("UserToken");
             UserTokenProvider = new DataProtectorTokenProvider<AppUser, string>(dataProtector) as IUserTokenProvider<AppUser, string>;
-        }      
+        }
     }
 }

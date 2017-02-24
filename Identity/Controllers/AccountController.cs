@@ -4,6 +4,7 @@ using System.Web;
 using System.Web.Mvc;
 using Identity.Managers;
 using Identity.Models;
+using Identity.Resources;
 using Identity.ViewModels;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
@@ -55,10 +56,11 @@ namespace Identity.Controllers
                 case SignInStatus.LockedOut:
                     return View("Lockout");
                 case SignInStatus.RequiresVerification:
-                    return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
+                    return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, model.RememberMe });
                 case SignInStatus.Failure:
+                    return View("Error");
                 default:
-                    ModelState.AddModelError("", "Login ou Senha incorretos.");
+                    ModelState.AddModelError("", Texto.LoginSenhaIncorreto);
                     return View(model);
             }
         }
@@ -73,12 +75,17 @@ namespace Identity.Controllers
             {
                 return View("Error");
             }
+
             var user = await _userManager.FindByIdAsync(await _signInManager.GetVerifiedUserIdAsync());
-            if (user != null)
+
+            if (user == null)
             {
-                ViewBag.Status = "DEMO: Caso o código não chegue via " + provider + " o código é: ";
-                ViewBag.CodigoAcesso = await _userManager.GenerateTwoFactorTokenAsync(user.Id, provider);
+                return View(new VerifyCodeViewModel { Provider = provider, ReturnUrl = returnUrl, RememberMe = rememberMe });
             }
+
+            ViewBag.Status = "DEMO: Caso o código não chegue via " + provider + " o código é: ";
+            ViewBag.CodigoAcesso = await _userManager.GenerateTwoFactorTokenAsync(user.Id, provider);
+
             return View(new VerifyCodeViewModel { Provider = provider, ReturnUrl = returnUrl, RememberMe = rememberMe });
         }
 
@@ -94,7 +101,7 @@ namespace Identity.Controllers
                 return View(model);
             }
 
-            var result = await _signInManager.TwoFactorSignInAsync(model.Provider, model.Code, isPersistent: model.RememberMe, rememberBrowser: model.RememberBrowser);
+            var result = await _signInManager.TwoFactorSignInAsync(model.Provider, model.Code,  model.RememberMe, model.RememberBrowser);
             switch (result)
             {
                 case SignInStatus.Success:
@@ -102,8 +109,9 @@ namespace Identity.Controllers
                 case SignInStatus.LockedOut:
                     return View("Lockout");
                 case SignInStatus.Failure:
+                    return View("Error");
                 default:
-                    ModelState.AddModelError("", "Código Inválido.");
+                    ModelState.AddModelError("", Texto.CodigoInvalido);
                     return View(model);
             }
         }
@@ -123,22 +131,29 @@ namespace Identity.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Register(RegisterViewModel model)
         {
-            if (ModelState.IsValid)
-            {
-                var user = new AppUser{ UserName = model.Email, Email = model.Email };
-                var result = await _userManager.CreateAsync(user, model.Password);
-                if (result.Succeeded)
-                {
-                    await _signInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+            if (!ModelState.IsValid) return View(model);
 
-                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user.Id);
-                    var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-                    await _userManager.SendEmailAsync(user.Id, "Confirme sua Conta", "<a href='" + callbackUrl + "'>Por favor confirme sua conta clicando neste link</a>");
-                    ViewBag.Link = callbackUrl;
-                    return View("DisplayEmail");
-                }
-                AddErrors(result);
+            var user = new AppUser{ UserName = model.Email, Email = model.Email };
+
+            var result = await _userManager.CreateAsync(user, model.Password);
+
+            if (result.Succeeded)
+            {
+                await _signInManager.SignInAsync(user, false, false);
+
+                var code = await _userManager.GenerateEmailConfirmationTokenAsync(user.Id);
+
+                if (Request.Url == null) return View("DisplayEmail");
+
+                var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code },  Request.Url.Scheme);
+
+                await _userManager.SendEmailAsync(user.Id, "Confirme sua Conta", Texto.LinkConfirmacao.Replace("#", callbackUrl));
+
+                ViewBag.Link = callbackUrl;
+
+                return View("DisplayEmail");
             }
+            AddErrors(result);
 
             // If we got this far, something failed, redisplay form
             return View(model);
@@ -172,26 +187,34 @@ namespace Identity.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> ForgotPassword(ForgotPasswordViewModel model)
         {
-            if (ModelState.IsValid)
-            {
-                var user = await _userManager.FindByNameAsync(model.Email);
-                if (user == null || !(await _userManager.IsEmailConfirmedAsync(user.Id)))
-                {
-                    // Não revelar se o usuario nao existe ou nao esta confirmado
-                    return View("ForgotPasswordConfirmation");
-                }
+            // No caso de falha, reexibir a view.
+            if (!ModelState.IsValid) return View(model);
 
-                var code = await _userManager.GeneratePasswordResetTokenAsync(user.Id);
-                var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-                await _userManager.SendEmailAsync(user.Id, "Esqueci minha senha", "Por favor altere sua senha clicando aqui: <a href='" + callbackUrl + "'></a>");
-                ViewBag.Link = callbackUrl;
-                ViewBag.Status = "DEMO: Caso o link não chegue: ";
-                ViewBag.LinkAcesso = callbackUrl;
+            var user = await _userManager.FindByNameAsync(model.Email);
+
+            if (user == null || !(await _userManager.IsEmailConfirmedAsync(user.Id)))
+            {
+                // Não revelar se o usuario nao existe ou nao esta confirmado
                 return View("ForgotPasswordConfirmation");
             }
 
-            // No caso de falha, reexibir a view. 
-            return View(model);
+            if (Request.Url == null) return View("ForgotPasswordConfirmation");
+
+            var code = await _userManager.GeneratePasswordResetTokenAsync(user.Id);
+
+            var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code }, Request.Url.Scheme);
+
+            await _userManager.SendEmailAsync(user.Id, "Esqueci minha senha", Texto.AlterarSenha.Replace("#", callbackUrl));
+
+            ViewBag.Link = callbackUrl;
+
+            ViewBag.Status = "DEMO: Caso o link não chegue: ";
+
+            ViewBag.LinkAcesso = callbackUrl;
+
+            return View("ForgotPasswordConfirmation");
+
+           
         }
 
         //
@@ -287,7 +310,7 @@ namespace Identity.Controllers
             {
                 return View("Error");
             }
-            return RedirectToAction("VerifyCode", new { Provider = model.SelectedProvider, ReturnUrl = model.ReturnUrl, RememberMe = model.RememberMe });
+            return RedirectToAction("VerifyCode", new { Provider = model.SelectedProvider, model.ReturnUrl, model.RememberMe });
         }
 
         //
@@ -312,6 +335,7 @@ namespace Identity.Controllers
                 case SignInStatus.RequiresVerification:
                     return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = false });
                 case SignInStatus.Failure:
+                    return View("Error");
                 default:
                     // Se ele nao tem uma conta solicite que crie uma
                     ViewBag.ReturnUrl = returnUrl;
@@ -376,25 +400,15 @@ namespace Identity.Controllers
             return View();
         }
 
-        //protected override void Dispose(bool disposing)
-        //{
-        //    if (disposing)
-        //    {
-        //        if (_userManager != null)
-        //        {
-        //            _userManager.Dispose();
-        //            _userManager = null;
-        //        }
-
-        //        if (_signInManager != null)
-        //        {
-        //            _signInManager.Dispose();
-        //            _signInManager = null;
-        //        }
-        //    }
-
-        //    base.Dispose(disposing);
-        //}
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _userManager?.Dispose();            
+                _signInManager?.Dispose();              
+            }
+            base.Dispose(disposing);
+        }
 
         #region Helpers
         // Used for XSRF protection when adding external logins

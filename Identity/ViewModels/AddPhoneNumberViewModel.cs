@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Identity.Resources;
 
 namespace Identity.ViewModels
 {
@@ -6,7 +7,7 @@ namespace Identity.ViewModels
     {
         [Required]
         [Phone]
-        [Display(Name = "Phone Number")]
+        [Display(ResourceType = typeof(Texto), Name = "PhoneNumber")]
         public string Number { get; set; }
     }
 }

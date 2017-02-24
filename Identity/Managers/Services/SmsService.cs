@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNet.Identity;
 
-namespace Identity.Services
+namespace Identity.Managers.Services
 {
     public class SmsService : IIdentityMessageService
     {
@@ -10,8 +10,8 @@ namespace Identity.Services
             // Utilizando TWILIO como SMS Provider.
             // https://www.twilio.com/docs/quickstart/csharp/sms/sending-via-rest
 
-            const string accountSid = "SEU ID";
-            const string authToken = "SEU TOKEN";
+            //const string accountSid = "SEU ID";
+            //const string authToken = "SEU TOKEN";
 
             //var client = new TwilioRestClient(accountSid, authToken);
 

@@ -2,14 +2,12 @@
 using System.Configuration;
 using System.Net;
 using System.Net.Mail;
-using System.Net.Mime;
 using System.Threading.Tasks;
-using System.Web;
 using Identity.Contexts;
 using Identity.Models;
 using Microsoft.AspNet.Identity;
 
-namespace Identity.Services
+namespace Identity.Managers.Services
 {
     public class EmailService : IIdentityMessageService
     {

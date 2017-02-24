@@ -6,8 +6,7 @@ using Microsoft.AspNet.Identity.EntityFramework;
 namespace Identity.Models
 {
     public class AppUser: IdentityUser
-    {
-
+    {      
         public async Task<ClaimsIdentity> GenerateUserIdentityAsync(UserManager<AppUser> manager)
         {
             var userIdentity = await manager.CreateIdentityAsync(this, DefaultAuthenticationTypes.ApplicationCookie);
