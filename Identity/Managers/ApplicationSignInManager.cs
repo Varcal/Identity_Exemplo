@@ -14,10 +14,5 @@ namespace Identity.Managers
         {
 
         }
-
-        public override Task<ClaimsIdentity> CreateUserIdentityAsync(AppUser user)
-        {
-            return user.GenerateUserIdentityAsync((ApplicationUserManager)UserManager);
-        }
     }
 }

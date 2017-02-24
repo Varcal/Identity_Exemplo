@@ -130,6 +130,11 @@
     <Compile Include="Managers\ApplicationRoleManager.cs" />
     <Compile Include="Managers\ApplicationSignInManager.cs" />
     <Compile Include="Managers\ApplicationUserManager.cs" />
+    <Compile Include="Migrations\201702242150426_Teste.cs" />
+    <Compile Include="Migrations\201702242150426_Teste.Designer.cs">
+      <DependentUpon>201702242150426_Teste.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Services\EmailService.cs" />
     <Compile Include="Services\SmsService.cs" />
     <Compile Include="Models\AppUser.cs" />
@@ -165,6 +170,9 @@
     <Compile Include="ViewModels\VerifyPhoneNumberViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Migrations\201702242150426_Teste.resx">
+      <DependentUpon>201702242150426_Teste.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

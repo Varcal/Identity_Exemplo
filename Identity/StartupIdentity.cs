@@ -6,7 +6,6 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin;
 using Microsoft.Owin.Security.Cookies;
-using Microsoft.Owin.Security.DataProtection;
 using Owin;
 using Microsoft.Owin.Security.Google;
 
@@ -14,11 +13,8 @@ namespace Identity
 {
     public class StartupIdentity
     {
-        public static IDataProtectionProvider DataProtectionProvider { get; private set; }
-
         public static void Configuration(IAppBuilder app)
         {
-            DataProtectionProvider = app.GetDataProtectionProvider();
             ConfigureAuth(app);
         }
 
@@ -63,36 +59,35 @@ namespace Identity
             //   appId: "",
             //   appSecret: "");
 
-            var goo = new GoogleOAuth2AuthenticationOptions()
+            var googlePlusOptions = new GoogleOAuth2AuthenticationOptions
             {
                 ClientId = @"214177050910-a6n6876ffteg024lasuf85d1c584hjrf.apps.googleusercontent.com",
-                ClientSecret = @"ksQGWc7AfmY8j2NSMGJqrJvF"
+                ClientSecret = @"DMGAbdvLAysyOKCbF4NfADzc"
             };
 
-            goo.Scope.Add("email");
-            goo.Scope.Add("publish_actions");
-            goo.Scope.Add("basic_info");
+            googlePlusOptions.Scope.Add("openid");
+            googlePlusOptions.Scope.Add("profile");
+            googlePlusOptions.Scope.Add("email");
 
-            goo.Provider = new GoogleOAuth2AuthenticationProvider()
+            googlePlusOptions.Provider = new GoogleOAuth2AuthenticationProvider
             {
-
                 OnAuthenticated = (context) =>
                 {
-                    context.Identity.AddClaim(new System.Security.Claims.Claim("urn:facebook:access_token", context.AccessToken, "goo", "Google"));
+                    context.Identity.AddClaim(new System.Security.Claims.Claim("urn:google:access_token", context.AccessToken));
                     foreach (var x in context.User)
                     {
                         var claimType = $"urn:google:{x.Key}";
-                        string claimValue = x.Value.ToString();
+                        var claimValue = x.Value.ToString();
                         if (!context.Identity.HasClaim(claimType, claimValue))
-                            context.Identity.AddClaim(new System.Security.Claims.Claim(claimType, claimValue, "goo", "Google"));
+                            context.Identity.AddClaim(new System.Security.Claims.Claim(claimType, claimValue));
 
                     }
                     return Task.FromResult(0);
                 }
             };
 
-            goo.SignInAsAuthenticationType = DefaultAuthenticationTypes.ExternalCookie;
-            app.UseGoogleAuthentication(goo);
+            googlePlusOptions.SignInAsAuthenticationType = DefaultAuthenticationTypes.ExternalCookie;
+            app.UseGoogleAuthentication(googlePlusOptions);
         }
     }
 }

@@ -17,11 +17,13 @@ namespace Identity.Controllers
     {
         private readonly ApplicationSignInManager _signInManager;
         private readonly ApplicationUserManager _userManager;
+        private readonly IAuthenticationManager _authenticationManager;
 
-        public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager)
+        public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager, IAuthenticationManager authenticationManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _authenticationManager = authenticationManager;
         }
 
 
@@ -49,6 +51,8 @@ namespace Identity.Controllers
             // This doesn't count login failures towards account lockout
             // To enable password failures to trigger account lockout, change to shouldLockout: true
             var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: true);
+            var user = User.Identity;
+
             switch (result)
             {
                 case SignInStatus.Success:
@@ -318,7 +322,7 @@ namespace Identity.Controllers
         [AllowAnonymous]
         public async Task<ActionResult> ExternalLoginCallback(string returnUrl)
         {
-            var loginInfo = await AuthenticationManager.GetExternalLoginInfoAsync();
+            var loginInfo = await _authenticationManager.GetExternalLoginInfoAsync();
             if (loginInfo == null)
             {
                 return RedirectToAction("Login");
@@ -334,8 +338,7 @@ namespace Identity.Controllers
                     return View("Lockout");
                 case SignInStatus.RequiresVerification:
                     return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = false });
-                case SignInStatus.Failure:
-                    return View("Error");
+                //case SignInStatus.Failure:
                 default:
                     // Se ele nao tem uma conta solicite que crie uma
                     ViewBag.ReturnUrl = returnUrl;
@@ -359,7 +362,7 @@ namespace Identity.Controllers
             if (ModelState.IsValid)
             {
                 // Pegar a informação do login externo.
-                var info = await AuthenticationManager.GetExternalLoginInfoAsync();
+                var info = await _authenticationManager.GetExternalLoginInfoAsync();
                 if (info == null)
                 {
                     return View("ExternalLoginFailure");
@@ -388,7 +391,7 @@ namespace Identity.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult LogOff()
         {
-            AuthenticationManager.SignOut();
+            _authenticationManager.SignOut();
             return RedirectToAction("Index", "Home");
         }
 
@@ -414,13 +417,7 @@ namespace Identity.Controllers
         // Used for XSRF protection when adding external logins
         private const string XsrfKey = "XsrfId";
 
-        private IAuthenticationManager AuthenticationManager
-        {
-            get
-            {
-                return HttpContext.GetOwinContext().Authentication;
-            }
-        }
+        
 
         private void AddErrors(IdentityResult result)
         {

@@ -15,15 +15,10 @@ namespace Identity.Contexts
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-
-            base.OnModelCreating(modelBuilder);
-
-
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
             modelBuilder.Conventions.Remove<PluralizingEntitySetNameConvention>();
             modelBuilder.Conventions.Remove<OneToManyCascadeDeleteConvention>();
             modelBuilder.Conventions.Remove<ManyToManyCascadeDeleteConvention>();
-
             modelBuilder.Properties<string>().Configure(x => x.HasColumnType("varchar"));
             modelBuilder.Properties<string>().Configure(x => x.HasMaxLength(256));
         }
