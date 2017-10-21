@@ -1,11 +1,10 @@
 ﻿using System;
-using Identity.Contexts;
+using System.Data.Entity;
+using System.Linq;
 using Identity.Managers.Services;
 using Identity.Models;
-using Identity.ViewModels;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
-using Microsoft.Owin;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security.DataProtection;
 
@@ -13,8 +12,10 @@ namespace Identity.Managers
 {
     public sealed class ApplicationUserManager : UserManager<AppUser>
     {
+        private IUserStore<AppUser> _store;
         public ApplicationUserManager(IUserStore<AppUser> store) : base(store)
         {
+            _store = store;
             ConfigureUserManager();
         }
 
@@ -53,9 +54,14 @@ namespace Identity.Managers
             EmailService = new EmailService();
             SmsService = new SmsService();
 
+            using (var ctx = new IdentityDbContext())
+            {
+                var flag = ctx.Users.Include(x => x.Claims).SelectMany(x => x.Claims).Any();
+            }
+
             var provider = new DpapiDataProtectionProvider("Identity_Exemplo");
             var dataProtector = provider.Create("UserToken");
-            UserTokenProvider = new DataProtectorTokenProvider<AppUser, string>(dataProtector) as IUserTokenProvider<AppUser, string>;
+            UserTokenProvider = new DataProtectorTokenProvider<AppUser, string>(dataProtector);
         }
     }
 }

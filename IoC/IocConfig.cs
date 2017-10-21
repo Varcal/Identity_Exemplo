@@ -35,7 +35,7 @@ namespace IoC
         {
             #region Identity
             container.Register<IdentityAppContext>(Lifestyle.Scoped);
-            container.Register<IUserStore<AppUser>>(()=> new UserStore<AppUser>(new IdentityAppContext()), Lifestyle.Scoped);
+            container.Register<IUserStore<AppUser>>(() => new UserStore<AppUser>(new IdentityAppContext()), Lifestyle.Scoped);
             container.Register<IRoleStore<IdentityRole, string>>(() => new RoleStore<IdentityRole>(new IdentityAppContext()), Lifestyle.Scoped);
             container.Register<ApplicationUserManager>(Lifestyle.Scoped);
             container.Register<ApplicationSignInManager>(Lifestyle.Scoped);
