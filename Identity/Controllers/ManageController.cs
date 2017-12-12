@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Mvc;
 using Identity.Managers;
 using Identity.ViewModels;
@@ -16,12 +15,14 @@ namespace Identity.Controllers
         private readonly ApplicationSignInManager _signInManager;
         private ApplicationUserManager _userManager;
         private readonly ApplicationRoleManager _roleManager;
+        private readonly IAuthenticationManager _authenticationManager;
 
-        public ManageController(ApplicationUserManager userManager, ApplicationSignInManager signInManager, ApplicationRoleManager roleManager)
+        public ManageController(ApplicationUserManager userManager, ApplicationSignInManager signInManager, ApplicationRoleManager roleManager, IAuthenticationManager authenticationManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
+            _authenticationManager = authenticationManager;
         }
 
         //
@@ -44,7 +45,7 @@ namespace Identity.Controllers
                 PhoneNumber = await _userManager.GetPhoneNumberAsync(userId),
                 TwoFactor = await _userManager.GetTwoFactorEnabledAsync(userId),
                 Logins = await _userManager.GetLoginsAsync(userId),
-                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(userId)
+                BrowserRemembered = await _authenticationManager.TwoFactorBrowserRememberedAsync(userId)
             };
             return View(model);
         }
@@ -108,8 +109,8 @@ namespace Identity.Controllers
         [HttpPost]
         public ActionResult RememberBrowser()
         {
-            var rememberBrowserIdentity = AuthenticationManager.CreateTwoFactorRememberBrowserIdentity(User.Identity.GetUserId());
-            AuthenticationManager.SignIn(new AuthenticationProperties { IsPersistent = true }, rememberBrowserIdentity);
+            var rememberBrowserIdentity = _authenticationManager.CreateTwoFactorRememberBrowserIdentity(User.Identity.GetUserId());
+            _authenticationManager.SignIn(new AuthenticationProperties { IsPersistent = true }, rememberBrowserIdentity);
             return RedirectToAction("Index", "Manage");
         }
 
@@ -118,7 +119,7 @@ namespace Identity.Controllers
         [HttpPost]
         public ActionResult ForgetBrowser()
         {
-            AuthenticationManager.SignOut(DefaultAuthenticationTypes.TwoFactorRememberBrowserCookie);
+            _authenticationManager.SignOut(DefaultAuthenticationTypes.TwoFactorRememberBrowserCookie);
             return RedirectToAction("Index", "Manage");
         }
 
@@ -188,7 +189,7 @@ namespace Identity.Controllers
             }
 
             // No caso de falha, reexibir a view. 
-            ModelState.AddModelError("", "Falha ao adicionar telefone");
+            ModelState.AddModelError("", @"Falha ao adicionar telefone");
             return View(model);
         }
 
@@ -286,7 +287,7 @@ namespace Identity.Controllers
                 return View("Error");
             }
             var userLogins = await _userManager.GetLoginsAsync(User.Identity.GetUserId());
-            var otherLogins = AuthenticationManager.GetExternalAuthenticationTypes().Where(auth => userLogins.All(ul => auth.AuthenticationType != ul.LoginProvider)).ToList();
+            var otherLogins = _authenticationManager.GetExternalAuthenticationTypes().Where(auth => userLogins.All(ul => auth.AuthenticationType != ul.LoginProvider)).ToList();
             ViewBag.ShowRemoveButton = user.PasswordHash != null || userLogins.Count > 1;
             return View(new ManageLoginsViewModel
             {
@@ -309,7 +310,7 @@ namespace Identity.Controllers
         // GET: /Manage/LinkLoginCallback
         public async Task<ActionResult> LinkLoginCallback()
         {
-            var loginInfo = await AuthenticationManager.GetExternalLoginInfoAsync(XsrfKey, User.Identity.GetUserId());
+            var loginInfo = await _authenticationManager.GetExternalLoginInfoAsync(XsrfKey, User.Identity.GetUserId());
             if (loginInfo == null)
             {
                 return RedirectToAction("ManageLogins", new { Message = ManageMessageId.Error });
@@ -350,14 +351,6 @@ namespace Identity.Controllers
         // Used for XSRF protection when adding external logins
         private const string XsrfKey = "XsrfId";
 
-        private IAuthenticationManager AuthenticationManager
-        {
-            get
-            {
-                return HttpContext.GetOwinContext().Authentication;
-            }
-        }
-
         private void AddErrors(IdentityResult result)
         {
             foreach (var error in result.Errors)
@@ -369,21 +362,7 @@ namespace Identity.Controllers
         private bool HasPassword()
         {
             var user = _userManager.FindById(User.Identity.GetUserId());
-            if (user != null)
-            {
-                return user.PasswordHash != null;
-            }
-            return false;
-        }
-
-        private bool HasPhoneNumber()
-        {
-            var user = _userManager.FindById(User.Identity.GetUserId());
-            if (user != null)
-            {
-                return user.PhoneNumber != null;
-            }
-            return false;
+            return user?.PasswordHash != null;
         }
 
         public enum ManageMessageId

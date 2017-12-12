@@ -418,7 +418,6 @@ namespace Identity.Controllers
         private const string XsrfKey = "XsrfId";
 
         
-
         private void AddErrors(IdentityResult result)
         {
             foreach (var error in result.Errors)
@@ -461,6 +460,7 @@ namespace Identity.Controllers
                 {
                     properties.Dictionary[XsrfKey] = UserId;
                 }
+
                 context.HttpContext.GetOwinContext().Authentication.Challenge(properties, LoginProvider);
             }
         }
